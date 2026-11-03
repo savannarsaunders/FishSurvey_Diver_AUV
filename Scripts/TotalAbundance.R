@@ -29,7 +29,10 @@ SiteMetadata <- read_xlsx("Data/Fish Count Data_11_2.xlsx", sheet = "SiteMetadat
 
 # Removing Time & Combine C, D, R > Abundance -----------------------------------------
 
-species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, C_D_R)
+species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, C_D_R, TotalDuration_min) |> 
+  mutate(
+    abund_per_min = total_abundance/TotalDuration_min
+  )
 
 # Site (factor), transect ID (unique identifier), CDR (factor), aggregate to species richness (number), total abundance (number)
 
@@ -52,6 +55,7 @@ comp_abundance <- species_abundance |>
   filter(n() == 3) |> 
   ungroup()
 
+
 # abundance_transectID_plot(comp_abundance)
 
 # Graphs ------------------------------------------------------------------
@@ -72,7 +76,11 @@ abundance_method_plot <- function(data) {
 abundance_method_plot(comp_abundance)
 
 ##Loop to make an abundance graph for each site separated by replication including species richness per each observation - only comparisons with all C_D_R
-abund_graphs_site_loop(comp_abundance, 2, "trophic richness", "totalabundance")
+abund_graphs_site_loop(comp_abundance, abund_per_min, 2, "trophic richness", "totalabundance")
+
+
+# Time --------------------------------------------------------------------
+
 
 
 # Regression ------------------------------------------------------
@@ -201,4 +209,5 @@ abund_mixed <- glmer(
   family = poisson(link = "log")
 )
 check_model(abund_mixed)
+check_overdispersion(abund_mixed)
 summary(abund_mixed)
