@@ -1,0 +1,51 @@
+---
+title: "Diver vs. AUV Fish Survey Data Exploration"
+author: "Savanna R. Saunders"
+date: today
+description: "This project will support my thesis research on comparing diver- and AUV-based fish survey methods in the U.S. Virgin Islands and serve as my final project for the GIS & R Course."
+format: 
+  html:
+    include-in-header: 
+      - ../back-to-top.html
+    respect-user-color-scheme: true
+    theme:
+      light: lumen
+      dark: darkly
+    toc: true
+    toc-location: left
+    toc-expand: 3
+    number-sections: false
+    code-fold: show
+
+---
+
+# sec
+
+shjd
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+### heafer 33
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+### he
+
+#### 4jngjn

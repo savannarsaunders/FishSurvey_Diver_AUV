@@ -20,10 +20,10 @@ conflicted::conflicts_prefer(dplyr::group_by)
 
 # Data Import -------------------------------------------------------------
 
-fishmeta <- metafish("Data/Fish Count Data_11_2.xlsx")
-video <- VideoDataCleaning_time("Data/Fish Count Data_11_2.xlsx", fishmeta)
-clipboard <- ClipboardDataCleaning("Data/Fish Count Data_11_2.xlsx", video)
-SiteMetadata <- read_xlsx("Data/Fish Count Data_11_2.xlsx", sheet = "SiteMetadata")
+fishmeta <- metafish("Data/Fish Count Data_11_12_26.xlsx")
+video <- VideoDataCleaning_time("Data/Fish Count Data_11_12_26.xlsx", fishmeta)
+clipboard <- ClipboardDataCleaning("Data/Fish Count Data_11_12_26.xlsx", video)
+SiteMetadata <- read_xlsx("Data/Fish Count Data_11_12_26.xlsx", sheet = "SiteMetadata")
 
 
 
@@ -34,6 +34,8 @@ species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, 
     abund_per_min = total_abundance/TotalDuration_min
   )
 
+## CSV for GIS richness map
+write.csv(species_abundance, "Outputs/DataFrames/species_abundance.csv", row.names = FALSE)
 # Site (factor), transect ID (unique identifier), CDR (factor), aggregate to species richness (number), total abundance (number)
 
 
@@ -76,12 +78,12 @@ abundance_method_plot <- function(data) {
 abundance_method_plot(comp_abundance)
 
 ##Loop to make an abundance graph for each site separated by replication including species richness per each observation - only comparisons with all C_D_R
-abund_graphs_site_loop(comp_abundance, abund_per_min, 2, "trophic richness", "totalabundance")
+abund_graphs_site_loop(comp_abundance, total_abundance, 2, "trophic richness", "totalabundance")
 
 
 # Time --------------------------------------------------------------------
 
-
+abund_graphs_site_loop(comp_abundance, abund_per_min, 2, "trophic richness", "totalabundance")
 
 # Regression ------------------------------------------------------
 
