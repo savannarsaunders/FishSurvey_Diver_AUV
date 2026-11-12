@@ -23,7 +23,8 @@ conflicted::conflicts_prefer(dplyr::group_by)
 fishmeta <- metafish("Data/Fish Count Data_11_12_26.xlsx")
 video <- VideoDataCleaning_time("Data/Fish Count Data_11_12_26.xlsx", fishmeta)
 clipboard <- ClipboardDataCleaning("Data/Fish Count Data_11_12_26.xlsx", video)
-SiteMetadata <- read_xlsx("Data/Fish Count Data_11_12_26.xlsx", sheet = "SiteMetadata")
+SiteMetadata <- read_xlsx("Data/Fish Count Data_11_12_26.xlsx", sheet = "SiteMetadata") |> 
+  filter(Code != "GKT")
 
 
 
@@ -36,6 +37,8 @@ species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, 
 
 ## CSV for GIS richness map
 write.csv(species_abundance, "Outputs/DataFrames/species_abundance.csv", row.names = FALSE)
+write.csv(SiteMetadata, "Outputs/DataFrames/SiteMetadata.csv", row.names = FALSE)
+
 # Site (factor), transect ID (unique identifier), CDR (factor), aggregate to species richness (number), total abundance (number)
 
 
