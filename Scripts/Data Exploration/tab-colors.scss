@@ -1,0 +1,23 @@
+/*-- scss:rules --*/
+
+/* Light mode: use Lumen's primary color */
+.quarto-light .panel-tabset .nav-link.active {
+  background-color: var(--bs-primary);
+  color: white;
+  border-color: var(--bs-primary);
+}
+
+.quarto-light .panel-tabset .nav-link:hover:not(.active) {
+  color: var(--bs-primary);
+}
+
+/* Dark mode: use Darkly's green */
+.quarto-dark .panel-tabset .nav-link.active {
+  background-color: #00bc8c;
+  color: white;
+  border-color: #00bc8c;
+}
+
+.quarto-dark .panel-tabset .nav-link:hover:not(.active) {
+  color: #00bc8c;
+}
