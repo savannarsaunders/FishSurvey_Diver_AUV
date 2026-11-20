@@ -1,0 +1,20 @@
+project:
+  type: website
+
+website:
+  title: "Data Exploration"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+
+format:
+  html:
+    theme: 
+        light: 
+        - lumen
+        - tab-colors.scss
+      dark: 
+        - darkly
+        - tab-colors.scss
+    toc: true
