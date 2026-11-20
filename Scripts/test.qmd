@@ -1,0 +1,33 @@
+---
+title: "Main Page"
+format:
+  html:
+    section-divs: false
+    respect-user-color-scheme: true
+    theme:
+      light: lumen
+      dark: darkly
+    toc: true
+    toc-location: left
+    toc-expand: 3
+    number-sections: false
+    code-fold: show
+---
+
+## Analysis
+
+::: {.panel-tabset}
+
+## Abundance
+
+This is abundance.
+
+## Richness
+
+This is richness.
+
+## Trophic Level
+
+This is trophic level.
+
+:::
