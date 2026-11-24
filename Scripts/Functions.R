@@ -2,15 +2,15 @@
 # Removing Time & Combine C, D, R > Abundance -----------------------------------------
 
 abundance_df <- function(clipboard_df, video_df, ...) {
-  clipboard <- {{clipboard_df}} |> ## Gets rid of size bins and sums total count based on species & transect
-    group_by(SurveyDate, SurveyLocation, Observer, C_D_R, Transect, TotalDuration_min, ScientificName, Family, TrophicLevel, CommonName) |>
+  clipboards <- clipboard |> ## Gets rid of size bins and sums total count based on species & transect
+    group_by(SurveyDate, SurveyLocation, Observer, C_D_R, Transect, Visability, TotalDuration_min, ScientificName, Family, TrophicLevel, CommonName) |>
     summarize(
       TotalSppCount = sum(SppTotal, na.rm = TRUE),
       .groups = "drop") |> 
-    filter(C_D_R != "CQ") # Removes clipbord entries from 3 min surveys (different method)
+    filter(C_D_R != "CQ") # Removes clipboard entries from 3 min surveys (different method)
   
-  video <- {{video_df}}|> ## Groups each species entry per transect and sums the number of present fish per species -> behavior etc. is dropped
-    group_by(SurveyDate, SurveyLocation, Observer, C_D_R, Transect, TotalDuration_min, ScientificName, Family, TrophicLevel, CommonName) |>
+  videos <- video|> ## Groups each species entry per transect and sums the number of present fish per species -> behavior etc. is dropped
+    group_by(SurveyDate, SurveyLocation, Observer, C_D_R, Transect, Visability, TotalDuration_min, ScientificName, Family, TrophicLevel, CommonName) |>
     summarise(
       TotalSppCount = sum(Count, na.rm = TRUE),
       .groups = "drop") |> 
@@ -18,16 +18,22 @@ abundance_df <- function(clipboard_df, video_df, ...) {
   
   # combined the clipboard and video count data
   # should not have any NAs in any columns except for Behavior, 
-  all_data <- bind_rows(video, clipboard) 
+  all_data <- bind_rows(videos, clipboards) 
   
-  # creation od unique identifyer
-  all_data <- all_data |> 
+  # creation of unique identifier (TransectID, eg. 1_BPT, 5_FLC) 
+    # Every new survey location restarts at 1
+    # Numbering follows chronological date order and then numerical transect order - increase for every new date or new transect #
+  all_data <- all_data |>
     group_by(SurveyLocation) |>
     mutate(
       TransectID = paste0(
-        dense_rank(interaction(SurveyDate, Transect, drop = TRUE)),"_",SurveyLocation)) |>
-    ungroup() |>
-    arrange(SurveyLocation, parse_number(TransectID))
+        dense_rank(
+          paste(SurveyDate, Transect, sep = "_")
+        ),
+        "_", SurveyLocation
+      )
+    ) |>
+    ungroup()
   
   ## only gives this data frame
   # Site (factor), transect ID (unique identifier), CDR (factor), aggregate to species/trophic richness (number), total abundance per transect id/trophic level (number)
@@ -42,7 +48,8 @@ abundance_df <- function(clipboard_df, video_df, ...) {
     left_join(
       SiteMetadata |> 
         select(Code, Location), 
-      by = c("SurveyLocation" = "Code"))
+      by = c("SurveyLocation" = "Code")) |> 
+  ungroup()
 } 
 
 #check
@@ -58,7 +65,7 @@ abund_graphs_site_loop <- function(data, yval, numrow, RichnessType, AbundType) 
     abundance_site <- {{data}} |> 
       filter(Location == site)
     
-    by_site <- ggplot(abundance_site, aes(C_D_R, {{yval}}, fill = C_D_R)) + 
+    by_site <- ggplot(abundance_site, aes(C_D_R, {{yval}}, fill = Visability)) + 
       facet_wrap(~TransectID, nrow = {{numrow}}, labeller = as_labeller(function(repNum) {
         paste("Replication", sub("_.*", "", repNum))})) +
       geom_bar(stat = "identity") +
@@ -67,11 +74,11 @@ abund_graphs_site_loop <- function(data, yval, numrow, RichnessType, AbundType) 
                 color = "black",
                 size = 4)+
       scale_y_continuous(breaks = scales::breaks_width(50))+
-      scale_fill_discrete(
-        labels = c(
-          "C" = "Clipboard",
-          "D" = "Diver Video",
-          "R" = "Rangerbot Video"), name  = "Survey Method")+
+      scale_fill_manual(
+        values = c(
+          "Low" = "#CC79A7",
+          "Moderate" = "#F0E442",
+          "High" = "#009E73"))+
       labs(
         x = "Survey Method",
         y = "Total Abundance",
@@ -152,3 +159,54 @@ trophic_abund_graphs_site_loop <- function(data, yval, numrow, RichnessType, Abu
 # Check
 # trophic_abund_graphs_site_loop(comp_trophic_abundance, 2, "trophic richness", "trophic abundance")
 
+
+# Relative Abundance ------------------------------------------------------
+##only does ones with full C, D, R comparison match
+relative_abund <- function(decFactor, ylab) {
+  rel_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, SurveyDate, C_D_R, Visability, TotalDuration_min, CommonName, ScientificName, Family, TrophicLevel) |> 
+    group_by(TransectID, SurveyLocation, SurveyDate, C_D_R, Visability, {{decFactor}}) |>
+    summarise(
+      total_abundance = sum(total_abundance, na.rm = TRUE),
+      .groups = "drop") |> 
+    group_by(TransectID, SurveyLocation, SurveyDate, C_D_R, Visability) %>%
+    mutate(
+      relative_abundance = 
+        (total_abundance / sum(total_abundance)) * 100) 
+  
+  rel_comp_abundance <- rel_abundance |> 
+    group_by(TransectID) |> 
+    filter(all(c("C", "D", "R") %in% C_D_R)) |> 
+    ungroup()
+  
+  summary_relativeabundance <- rel_comp_abundance |> 
+    group_by(C_D_R) |> 
+    summarise(
+      mean_abund = mean(relative_abundance),
+      SEM_abund = sd(relative_abundance) / sqrt(length(relative_abundance)),
+      CI_low = mean_abund - 1.96*SEM_abund,
+      CI_high = mean_abund + 1.96*SEM_abund)
+  
+  rel_graph <- ggplot(summary_relativeabundance, aes(x = C_D_R, y = mean_abund, fill = C_D_R)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    geom_errorbar(aes(ymin = mean_abund - SEM_abund,
+                      ymax = mean_abund + SEM_abund), width = 0.2,
+                  position = position_dodge(.9))+
+    scale_x_discrete(
+      labels = c(
+        "C" = "Clipboard",
+        "D" = "Diver",
+        "R" = "Rangerbot"))+
+    labs(
+      x = "Survey Method",
+      y = paste("Relative Fish", {{ylab}}, "Abundance (%)"))+
+    theme_minimal()+
+    theme(
+      axis.text.x = element_text(size = 12),
+      strip.text = element_text( size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title = element_text(size = 15),
+      plot.caption = element_text(size = 10),
+      plot.title = element_text(size = 20)
+    )
+  print(rel_graph)
+}

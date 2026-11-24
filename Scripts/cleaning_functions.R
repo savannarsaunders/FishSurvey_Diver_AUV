@@ -75,7 +75,7 @@ metafish <- function(metadata_excel) {
       mutate(
         TimeStamp_sec = period_to_seconds(ms(TimeStamp))) |> 
 # new column total duration in sec of the total video (do not add this column)
-      group_by(Observer, Transect, SurveyDate, SurveyLocation,C_D_R) |>
+      group_by(Observer, Transect, SurveyDate, SurveyLocation,C_D_R, Visability) |>
       mutate(
         TotalDuration_sec = max(TimeStamp_sec, na.rm = TRUE) -
           min(TimeStamp_sec, na.rm = TRUE)) |> 
@@ -156,7 +156,7 @@ metafish <- function(metadata_excel) {
   
   # Clipboard Entries -------------------------------------------------------
   ClipboardDataCleaning <- function(FishCountExcel, videoDF_min) {
-    clipboard_entries <- read_xlsx({{FishCountExcel}}, sheet = "OCClipboard") |> 
+    clipboard_entries <- read_xlsx({{FishCountExcel}}, sheet = "OCClipboard")|> 
       drop_na(DateEntered, Digitizer,SurveyLocation,SurveyDate, SurveyTime, C_D_R,Transect,Observer,ScientificName,CommonName,TrophicGroup,Species) |> 
       select(SurveyLocation, SurveyDate, C_D_R:Observer, ScientificName:TrophicGroup, '0-5':SppTotal)|> 
       mutate(Transect = as.numeric(Transect)) |> 
@@ -168,12 +168,12 @@ metafish <- function(metadata_excel) {
     ##Adding in total duration in min from the videos from the exact same transect surveys
         left_join({{videoDF_min}} |> 
             filter(C_D_R == "D" | C_D_R == "DQ") |> 
-            select(Observer, Transect, SurveyDate, SurveyLocation, TotalDuration_min) |> 
+            select(Observer, Transect, SurveyDate, SurveyLocation, TotalDuration_min, Visability) |> 
             distinct(Observer, Transect, SurveyDate, SurveyLocation, .keep_all = TRUE),
           by = c("Observer","Transect","SurveyDate","SurveyLocation"),
           relationship = "many-to-one") |> 
-        select(-C_D_R.y) |> 
-        rename("C_D_R" = "C_D_R.x")
+    select(-C_D_R.y) |> 
+        rename("C_D_R" = "C_D_R.x") 
   }
 
   # clip <- ClipboardDataCleaning("Data/Fish Count Data.xlsx", videos)

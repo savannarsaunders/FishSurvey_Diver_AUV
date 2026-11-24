@@ -20,19 +20,26 @@ conflicted::conflicts_prefer(dplyr::group_by)
 
 # Data Import -------------------------------------------------------------
 
-fishmeta <- metafish("Data/Fish Count Data_11_12_26.xlsx")
-video <- VideoDataCleaning_time("Data/Fish Count Data_11_12_26.xlsx", fishmeta)
-clipboard <- ClipboardDataCleaning("Data/Fish Count Data_11_12_26.xlsx", video)
-SiteMetadata <- read_xlsx("Data/Fish Count Data_11_12_26.xlsx", sheet = "SiteMetadata") |> 
+fishmeta <- metafish("Data/Fish Count Data_11_24_26.xlsx")
+video <- VideoDataCleaning_time("Data/Fish Count Data_11_24_26.xlsx", fishmeta)
+clipboard <- ClipboardDataCleaning("Data/Fish Count Data_11_24_26.xlsx", video)
+SiteMetadata <- read_xlsx("Data/Fish Count Data_11_24_26.xlsx", sheet = "SiteMetadata") |> 
   filter(Code != "GKT")
-
-
 
 # Removing Time & Combine C, D, R > Abundance -----------------------------------------
 
-species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, C_D_R, TotalDuration_min) |> 
+species_abundance <- abundance_df(clipboard, video, TransectID, SurveyLocation, SurveyDate, C_D_R, Visability, TotalDuration_min) |> 
   mutate(
     abund_per_min = total_abundance/TotalDuration_min
+  )
+
+#table of how many are in each transect ID
+coun <- species_abundance |>
+  group_by(TransectID) |>
+  summarise(
+    type = paste(unique(C_D_R), collapse = ", "),
+    n_type = n_distinct(C_D_R),
+    .groups = "drop"
   )
 
 ## CSV for GIS richness map
@@ -86,6 +93,7 @@ abund_graphs_site_loop(comp_abundance, total_abundance, 2, "trophic richness", "
 
 # Time --------------------------------------------------------------------
 
+##function not updated with correct y labels
 abund_graphs_site_loop(comp_abundance, abund_per_min, 2, "trophic richness", "totalabundance")
 
 # Regression ------------------------------------------------------
@@ -206,13 +214,59 @@ pchisq(2 * (logLik(neg_bino_site_v) - logLik(pois_site_v)), df = 1, lower.tail =
 
 
 
-# Mixed model C, D, R -----------------------------------------------------
+# Box plots across all sites -----------------------------------------------------
 
-abund_mixed <- glmer(
-  total_abundance ~ C_D_R + (C_D_R | SurveyLocation), 
-  comp_abundance, 
-  family = poisson(link = "log")
-)
-check_model(abund_mixed)
-check_overdispersion(abund_mixed)
-summary(abund_mixed)
+# summary_abundance <- species_abundance %>%
+#   group_by(C_D_R) %>%
+#   summarise(
+#     mean_abund = mean(total_abundance),
+#     SEM_abund = sd(total_abundance) / sqrt(length(total_abundance)), 
+#     CI_low = mean_abund - 1.96*SEM_abund, # Finding Confidence Interval
+#     CI_high = mean_abund + 1.96*SEM_abund
+#   )
+# 
+# ggplot(summary_abundance, aes(x = C_D_R, y = mean_abund, fill = C_D_R)) + 
+#   geom_bar(stat = "identity", position = position_dodge()) +
+#   geom_errorbar(aes(ymin = mean_abund - SEM_abund, 
+#                     ymax = mean_abund + SEM_abund), width = 0.2,
+#                 position = position_dodge(.9))+
+#   scale_x_discrete(
+#     labels = c(
+#       "C" = "Clipboard",
+#       "D" = "Diver",
+#       "R" = "Rangerbot"))+
+#   labs(
+#     x = "Survey Method",
+#     y = "Mean Fish Abundance")
+
+
+#  Box plot with error  ---------------------------------------------------
+# Box plot with error across all sites showing just differences in C_D_R
+ggplot(comp_abundance, aes(x = C_D_R, y = total_abundance, fill = C_D_R)) + 
+  geom_boxplot() +
+  scale_x_discrete(
+    labels = c(
+      "C" = "Clipboard",
+      "D" = "Diver",
+      "R" = "Rangerbot"))+
+  labs(
+    x = "Survey Method",
+    y = "Fish Abundance")+
+  theme_minimal()+
+  theme(
+    axis.text.x = element_text(size = 12),
+    strip.text = element_text( size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 15),
+    plot.caption = element_text(size = 10),
+    plot.title = element_text(size = 20)
+  )
+#caption: The distribution of total abundance across different survey methods.
+
+
+# Relative Abundance ------------------------------------------------------
+
+##only compares with c, d, r full comparisons
+relative_abund(TrophicLevel, "Trophic Level")
+relative_abund(ScientificName, "Species")
+relative_abund(Family, "Family")

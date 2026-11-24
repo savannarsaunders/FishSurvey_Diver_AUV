@@ -1,23 +1,65 @@
 /*-- scss:rules --*/
 
-/* Light mode: use Lumen's primary color */
-.quarto-light .panel-tabset .nav-link.active {
-  background-color: var(--bs-primary);
-  color: white;
-  border-color: var(--bs-primary);
+/* LIGHT MODE */
+.quarto-light {
+  /* Panel tabs */
+  .panel-tabset .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+  }
+
+  .panel-tabset .nav-link:hover:not(.active) {
+    color: var(--bs-primary);
+  }
+
+  /* Document header */
+  .navbar {
+    background-color: var(--bs-primary);
+  }
+
+  .navbar .navbar-brand,
+  .navbar .nav-link {
+    color: white;
+  }
 }
 
-.quarto-light .panel-tabset .nav-link:hover:not(.active) {
-  color: var(--bs-primary);
+/* DARK MODE */
+.quarto-dark {
+  /* Panel tabs */
+  .panel-tabset .nav-link.active {
+    background-color: #00bc8c;
+    color: white;
+    border-color: #00bc8c;
+  }
+
+  .panel-tabset .nav-link:hover:not(.active) {
+    color: #00bc8c;
+  }
+
+  /* Document header */
+  .navbar {
+    background-color: #00bc8c;
+  }
+
+  .navbar .navbar-brand,
+  .navbar .nav-link {
+    color: white;
+  }
 }
 
-/* Dark mode: use Darkly's green */
-.quarto-dark .panel-tabset .nav-link.active {
-  background-color: #00bc8c;
-  color: white;
-  border-color: #00bc8c;
+/* Remove default blue navbar accent/border */
+.quarto-light .navbar,
+.quarto-dark .navbar {
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
-.quarto-dark .panel-tabset .nav-link:hover:not(.active) {
-  color: #00bc8c;
+/* Match any remaining header accent */
+.quarto-light .navbar {
+  border-color: var(--bs-primary) !important;
+}
+
+.quarto-dark .navbar {
+  border-color: #00bc8c !important;
 }
